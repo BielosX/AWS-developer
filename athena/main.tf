@@ -33,10 +33,12 @@ resource "aws_s3_bucket" "athena_results" {
 resource "aws_athena_database" "logs_db" {
   bucket = aws_s3_bucket.athena_results.id
   name = "test_bucket_logs"
+  force_destroy = true
 }
 
 resource "aws_athena_workgroup" "workgroup" {
   name = "workgroup"
+  force_destroy = true
   configuration {
     result_configuration {
       output_location = "s3://${aws_s3_bucket.athena_results.bucket}"
