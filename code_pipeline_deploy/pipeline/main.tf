@@ -26,14 +26,25 @@ resource "aws_iam_role_policy_attachment" "pipeline_s3_full_attach" {
   role = aws_iam_role.pipeline_service_role.id
 }
 
+resource "aws_iam_role_policy_attachment" "pipeline_codebuild_developer_attach" {
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess"
+  role = aws_iam_role.pipeline_service_role.id
+}
+
 resource "aws_s3_bucket" "artifacts_bucket" {
   force_destroy = true
   bucket = "artifacts-bucket-${local.account_id}-${local.region}"
+  versioning {
+    enabled = true
+  }
 }
 
 resource "aws_s3_bucket" "source_bucket" {
   force_destroy = true
   bucket = "source-bucket-${local.account_id}-${local.region}"
+  versioning {
+    enabled = true
+  }
 }
 
 resource "aws_codepipeline" "pipeline" {
