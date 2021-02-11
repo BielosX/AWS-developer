@@ -14,6 +14,24 @@ resource "aws_iam_role" "build_service_role" {
   assume_role_policy = data.aws_iam_policy_document.build_assume_role.json
 }
 
+data "aws_iam_policy_document" "ecr_full_access" {
+  statement {
+    effect = "Allow"
+    actions = ["ecr:*"]
+    resources = ["*"]
+  }
+}
+
+
+resource "aws_iam_policy" "ecr_full_access" {
+  policy = data.aws_iam_policy_document.ecr_full_access.json
+}
+
+resource "aws_iam_role_policy_attachment" "attach_ecr_full" {
+  policy_arn = aws_iam_policy.ecr_full_access.arn
+  role = aws_iam_role.build_service_role.id
+}
+
 resource "aws_iam_role_policy_attachment" "attach_vpc_full" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonVPCFullAccess"
   role = aws_iam_role.build_service_role.id
@@ -51,6 +69,26 @@ resource "aws_security_group" "build_security_group" {
   }
 }
 
+resource "aws_ecr_repository" "build_image_repo" {
+  name = "build-image-repo"
+}
+
+data "aws_iam_policy_document" "build_image_repo_policy" {
+  statement {
+    effect = "Allow"
+    principals {
+      identifiers = ["*"]
+      type = "*"
+    }
+    actions = ["ecr:*"]
+  }
+}
+
+resource "aws_ecr_repository_policy" "build_image_repo_policy" {
+  policy = data.aws_iam_policy_document.build_image_repo_policy.json
+  repository = aws_ecr_repository.build_image_repo.name
+}
+
 resource "aws_codebuild_project" "run_ansible" {
   name = "RunAnsible"
   service_role = aws_iam_role.build_service_role.arn
@@ -59,7 +97,7 @@ resource "aws_codebuild_project" "run_ansible" {
   }
   environment {
     compute_type = "BUILD_GENERAL1_SMALL"
-    image = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+    image = "${aws_ecr_repository.build_image_repo.repository_url}:latest"
     type = "LINUX_CONTAINER"
   }
   source {
