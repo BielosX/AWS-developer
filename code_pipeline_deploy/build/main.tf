@@ -65,9 +65,9 @@ resource "aws_codebuild_project" "run_ansible" {
   source {
     type = "CODEPIPELINE"
   }
-  //vpc_config {
-  //  security_group_ids = [aws_security_group.build_security_group.id]
-  //  subnets = var.subnets
-  //  vpc_id = var.vpc_id
-  //}
+  vpc_config {
+    security_group_ids = [aws_security_group.build_security_group.id]
+    subnets = var.subnets
+    vpc_id = var.vpc_id
+  }
 }
