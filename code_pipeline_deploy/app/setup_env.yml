@@ -1,0 +1,13 @@
+- name: Setup Dev env
+  hosts: all
+  become: yes
+  remote_user: ec2_user
+  tasks:
+    - name: Install Python3
+      dnf:
+        name: python3
+        state: latest
+    - name: Install Pip3
+      dnf:
+        name: pip3
+        state: latest
