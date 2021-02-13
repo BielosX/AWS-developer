@@ -4,5 +4,10 @@ phases:
   build:
     commands:
       - echo "Hello World"
-      - ansible-inventory -i deployment.aws_ec2.yml --graph
-      - ansible-playbook -i deployment.aws_ec2.yml setup_env.yml
+      - pycodestyle *.py
+
+artifacts:
+  files:
+    - hello.py
+    - requirements.txt
+    - appspec.yml

@@ -1,0 +1,13 @@
+#!/bin/bash -xe
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+  yum install wget -y
+  wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+  rpm -U ./amazon-cloudwatch-agent.rpm
+  /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c ssm:${config_param}
+  yum install python3 -y
+  yum install ruby -y
+  wget https://aws-codedeploy-${region}.s3.${region}.amazonaws.com/latest/install
+  chmod +x ./install
+  ./install auto
+  sudo service codedeploy-agent start
+  sudo service codedeploy-agent status

@@ -1,5 +1,0 @@
-plugin: amazon.aws.aws_ec2
-regions:
-  - eu-west-1
-filters:
-  tag:Name: MyDeployment
