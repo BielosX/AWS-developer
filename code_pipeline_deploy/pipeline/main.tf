@@ -163,6 +163,9 @@ resource "aws_codepipeline" "pipeline" {
       version = "1"
       configuration = {
         FunctionName = aws_lambda_function.deployment_function.function_name
+        UserParameters = jsonencode({
+          "count" = 5
+        })
       }
     }
   }
