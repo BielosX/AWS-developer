@@ -7,16 +7,6 @@ resource "aws_autoscaling_group" "app_deployment_asg" {
     id = aws_launch_template.deployment_launch_template.id
     version = aws_launch_template.deployment_launch_template.latest_version
   }
-  tag {
-    key = "Name"
-    value = "MyDeployment"
-    propagate_at_launch = true
-  }
-  tag {
-    key = "Deployment"
-    value = "MyDeployment"
-    propagate_at_launch = true
-  }
   vpc_zone_identifier = var.subnets
 }
 
@@ -107,4 +97,22 @@ resource "aws_launch_template" "deployment_launch_template" {
   iam_instance_profile {
     arn = aws_iam_instance_profile.instance_profile.arn
   }
+}
+
+resource "aws_elb" "deployment_elb" {
+  listener {
+    instance_port = 5000
+    instance_protocol = "http"
+    lb_port = 80
+    lb_protocol = "http"
+  }
+  internal = false
+  health_check {
+    healthy_threshold = 2
+    interval = 30
+    target = "HTTP:5000/health"
+    timeout = 3
+    unhealthy_threshold = 2
+  }
+  subnets = var.lb_subnets
 }

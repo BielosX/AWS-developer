@@ -21,6 +21,22 @@ resource "aws_iam_role" "pipeline_service_role" {
   assume_role_policy = data.aws_iam_policy_document.pipeline_assume_role.json
 }
 
+data "aws_iam_policy_document" "invoke_lambda" {
+  statement {
+    effect = "Allow"
+    resources = ["*"]
+    actions = [
+      "lambda:InvokeFunction",
+      "lambda:ListFunctions"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "invoke_lambda_policy" {
+  policy = data.aws_iam_policy_document.invoke_lambda.json
+  role = aws_iam_role.pipeline_service_role.id
+}
+
 resource "aws_iam_role_policy_attachment" "pipeline_s3_full_attach" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
   role = aws_iam_role.pipeline_service_role.id
@@ -45,6 +61,58 @@ resource "aws_s3_bucket" "source_bucket" {
   versioning {
     enabled = true
   }
+}
+
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      identifiers = ["lambda.amazonaws.com"]
+      type = "Service"
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "deployment_lambda_role" {
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+data "aws_iam_policy_document" "codepipeline_result" {
+  statement {
+    effect = "Allow"
+    resources = ["*"]
+    actions = [
+      "codepipeline:PutJobSuccessResult",
+      "codepipeline:PutJobFailureResult"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_codepipeline_result" {
+  policy = data.aws_iam_policy_document.codepipeline_result.json
+  role = aws_iam_role.deployment_lambda_role.id
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logs_full_access" {
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+  role = aws_iam_role.deployment_lambda_role.id
+}
+
+data "archive_file" "archive_lambda_code" {
+  output_path = "${path.module}/deployment_lambda.zip"
+  source_file = "${path.module}/deployment_lambda.py"
+  type = "zip"
+}
+
+resource "aws_lambda_function" "deployment_function" {
+  function_name = "deployment_function"
+  handler = "deployment_lambda.handle"
+  role = aws_iam_role.deployment_lambda_role.arn
+  runtime = "python3.8"
+  filename = data.archive_file.archive_lambda_code.output_path
+  source_code_hash = filebase64sha256(data.archive_file.archive_lambda_code.output_path)
+  timeout = 60
 }
 
 resource "aws_codepipeline" "pipeline" {
@@ -81,6 +149,20 @@ resource "aws_codepipeline" "pipeline" {
       input_artifacts = ["source_output"]
       configuration = {
         ProjectName = var.code_build_project
+      }
+    }
+  }
+
+  stage {
+    name = "Deploy"
+    action {
+      category = "Invoke"
+      name = "Deploy"
+      owner = "AWS"
+      provider = "Lambda"
+      version = "1"
+      configuration = {
+        FunctionName = aws_lambda_function.deployment_function.function_name
       }
     }
   }

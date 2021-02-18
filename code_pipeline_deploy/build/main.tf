@@ -90,7 +90,7 @@ resource "aws_ecr_repository_policy" "build_image_repo_policy" {
 }
 
 resource "aws_codebuild_project" "run_ansible" {
-  name = "RunAnsible"
+  name = "BuildAndTest"
   service_role = aws_iam_role.build_service_role.arn
   artifacts {
     type = "CODEPIPELINE"

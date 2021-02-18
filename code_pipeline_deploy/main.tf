@@ -9,7 +9,7 @@ data "aws_vpc" "simple" {
   }
 }
 
-data "aws_subnet_ids" "subnets" {
+data "aws_subnet_ids" "private_subnets" {
   vpc_id = data.aws_vpc.simple.id
   filter {
     name = "tag:Name"
@@ -17,15 +17,24 @@ data "aws_subnet_ids" "subnets" {
   }
 }
 
+data "aws_subnet_ids" "public_subnets" {
+  vpc_id = data.aws_vpc.simple.id
+  filter {
+    name = "tag:Name"
+    values = ["Public"]
+  }
+}
+
 module "ec2" {
   source = "./ec2"
-  subnets = data.aws_subnet_ids.subnets.ids
+  subnets = data.aws_subnet_ids.private_subnets.ids
   vpc_id = data.aws_vpc.simple.id
+  lb_subnets = data.aws_subnet_ids.public_subnets.ids
 }
 
 module "build" {
   source = "./build"
-  subnets = data.aws_subnet_ids.subnets.ids
+  subnets = data.aws_subnet_ids.private_subnets.ids
   vpc_id = data.aws_vpc.simple.id
 }
 
