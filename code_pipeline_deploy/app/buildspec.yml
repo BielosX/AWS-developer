@@ -7,7 +7,9 @@ phases:
       - pycodestyle *.py
 
 artifacts:
+  discard-paths: no
   files:
-    - hello.py
-    - requirements.txt
-    - appspec.yml
+    - 'hello.py'
+    - 'requirements.txt'
+    - 'appspec.yml'
+    - 'scripts/*'

@@ -1,2 +1,20 @@
 version: 0.0
 os: linux
+
+files:
+  - source: /
+    destination: /home/ec2-user/webapps/HelloApp
+permissions:
+  - object: /home/ec2-user/webapps
+    owner: ec2-user
+    type:
+      - directory
+hooks:
+  BeforeInstall:
+    - location: scripts/clean_old.sh
+      runas: root
+      timeout: 300
+  AfterInstall:
+    - location: scripts/run_server.sh
+      runas: ec2-user
+      tumeout: 600

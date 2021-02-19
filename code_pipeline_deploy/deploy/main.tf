@@ -36,7 +36,7 @@ resource "aws_codedeploy_deployment_group" "my_app_deployment_group" {
   app_name = aws_codedeploy_app.my_app.name
   deployment_group_name = "MyDeploymentBlueGreen"
   service_role_arn = aws_iam_role.codedeploy_service_role.arn
-  autoscaling_groups = var.auto_scaling_group
+  autoscaling_groups = [var.blue_asg]
   load_balancer_info {
     elb_info {
       name = var.elb_name

@@ -1,4 +1,4 @@
-variable "auto_scaling_group" {
+variable "blue_asg" {
   type = string
 }
 

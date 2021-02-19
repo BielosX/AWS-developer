@@ -1,5 +1,9 @@
-output "auto_scaling_group" {
-  value = aws_autoscaling_group.app_deployment_asg.id
+output "first_auto_scaling_group" {
+  value = aws_autoscaling_group.first_app_deployment_asg.id
+}
+
+output "second_auto_scaling_group" {
+  value = aws_autoscaling_group.second_app_deployment_asg.id
 }
 
 output "elb_name" {

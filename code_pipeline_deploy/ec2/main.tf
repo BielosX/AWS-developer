@@ -1,6 +1,16 @@
 data "aws_region" "current" {}
 
-resource "aws_autoscaling_group" "app_deployment_asg" {
+resource "aws_autoscaling_group" "first_app_deployment_asg" {
+  max_size = 2
+  min_size = 1
+  launch_template {
+    id = aws_launch_template.deployment_launch_template.id
+    version = aws_launch_template.deployment_launch_template.latest_version
+  }
+  vpc_zone_identifier = var.subnets
+}
+
+resource "aws_autoscaling_group" "second_app_deployment_asg" {
   max_size = 2
   min_size = 1
   launch_template {
@@ -23,7 +33,24 @@ data "aws_ami" "amazon_linux_2" {
   }
 }
 
+resource "aws_security_group" "elb_security_group" {
+  vpc_id = var.vpc_id
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+  }
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 5000
+    to_port = 5000
+    protocol = "tcp"
+  }
+}
+
 resource "aws_security_group" "deployment_security_group" {
+  depends_on = [aws_security_group.elb_security_group]
   vpc_id = var.vpc_id
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -36,6 +63,19 @@ resource "aws_security_group" "deployment_security_group" {
     from_port = 80
     protocol = "tcp"
     to_port = 80
+  }
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+  }
+  ingress {
+    //security_groups = [aws_security_group.elb_security_group.id]
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 5000
+    to_port = 5000
+    protocol = "tcp"
   }
   egress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -82,6 +122,11 @@ resource "aws_iam_role_policy_attachment" "attach_ssm_read_only" {
   role = aws_iam_role.deployment_role.id
 }
 
+resource "aws_iam_role_policy_attachment" "attach_s3_full" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  role = aws_iam_role.deployment_role.id
+}
+
 resource "aws_iam_instance_profile" "instance_profile" {
   role = aws_iam_role.deployment_role.name
 }
@@ -100,6 +145,7 @@ resource "aws_launch_template" "deployment_launch_template" {
 }
 
 resource "aws_elb" "deployment_elb" {
+  security_groups = [aws_security_group.elb_security_group.id]
   listener {
     instance_port = 5000
     instance_protocol = "http"
