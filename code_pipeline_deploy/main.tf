@@ -40,11 +40,15 @@ module "build" {
 
 module "deploy" {
   source = "./deploy"
-  blue_asg = module.ec2.first_auto_scaling_group
   elb_name = module.ec2.elb_name
+  blue_asg = module.ec2.first_auto_scaling_group
 }
 
 module "pipeline" {
   source = "./pipeline"
   code_build_project = module.build.build_project
+  first_asg = module.ec2.first_auto_scaling_group
+  second_asg = module.ec2.second_auto_scaling_group
+  code_deploy_application = module.deploy.application_name
+  deployment_group = module.deploy.deployment_group
 }

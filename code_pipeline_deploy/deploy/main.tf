@@ -57,4 +57,7 @@ resource "aws_codedeploy_deployment_group" "my_app_deployment_group" {
       action_on_timeout = "CONTINUE_DEPLOYMENT"
     }
   }
+  lifecycle {
+    ignore_changes = [autoscaling_groups]
+  }
 }

@@ -1,8 +1,8 @@
-variable "blue_asg" {
+variable "elb_name" {
   type = string
 }
 
-variable "elb_name" {
+variable "blue_asg" {
   type = string
 }
 

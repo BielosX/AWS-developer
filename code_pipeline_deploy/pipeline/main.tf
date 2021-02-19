@@ -99,6 +99,11 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_full_access" {
   role = aws_iam_role.deployment_lambda_role.id
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_code_deploy_full_access" {
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployFullAccess"
+  role = aws_iam_role.deployment_lambda_role.id
+}
+
 data "archive_file" "archive_lambda_code" {
   output_path = "${path.module}/deployment_lambda.zip"
   source_file = "${path.module}/deployment_lambda.py"
@@ -147,6 +152,7 @@ resource "aws_codepipeline" "pipeline" {
       provider = "CodeBuild"
       version = "1"
       input_artifacts = ["source_output"]
+      output_artifacts = ["build_output"]
       configuration = {
         ProjectName = var.code_build_project
       }
@@ -161,10 +167,14 @@ resource "aws_codepipeline" "pipeline" {
       owner = "AWS"
       provider = "Lambda"
       version = "1"
+      input_artifacts = ["build_output"]
       configuration = {
         FunctionName = aws_lambda_function.deployment_function.function_name
         UserParameters = jsonencode({
-          "count" = 5
+          "first_asg": var.first_asg
+          "second_asg": var.second_asg
+          "deployment_group": var.deployment_group
+          "application_name": var.code_deploy_application
         })
       }
     }
