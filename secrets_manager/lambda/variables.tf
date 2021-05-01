@@ -9,3 +9,7 @@ variable "vpc_id" {
 variable "private_subnet_id" {
   type = string
 }
+
+variable "secret_arn" {
+  type = string
+}

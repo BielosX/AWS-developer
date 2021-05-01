@@ -1,3 +1,4 @@
+data "aws_region" "current" {}
 
 locals {
   zip_file = "${path.module}/test_lambda.zip"
@@ -23,6 +24,24 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc" {
   role = aws_iam_role.lambda_role.id
 }
 
+data "aws_iam_policy_document" "get_secret" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:ListSecretVersionIds"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "get_secret" {
+  policy = data.aws_iam_policy_document.get_secret.json
+  role = aws_iam_role.lambda_role.id
+}
+
 resource "aws_security_group" "lambda_sg" {
   vpc_id = var.vpc_id
 
@@ -31,6 +50,18 @@ resource "aws_security_group" "lambda_sg" {
     from_port = 6379
     protocol = "tcp"
     to_port = 6379
+  }
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 80
+    protocol = "tcp"
+    to_port = 80
+  }
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 443
+    protocol = "tcp"
+    to_port = 443
   }
 }
 
@@ -50,6 +81,8 @@ resource "aws_lambda_function" "test_lambda" {
   environment {
     variables = {
       REDIS_URL: var.redis_url
+      REGION: data.aws_region.current.name
+      SECRET_ARN: var.secret_arn
     }
   }
 }

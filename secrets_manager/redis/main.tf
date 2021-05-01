@@ -29,5 +29,5 @@ resource "aws_elasticache_replication_group" "redis_cluster" {
   port = local.redis_port
   security_group_ids = [aws_security_group.redis_sg.id]
   subnet_group_name = aws_elasticache_subnet_group.redis_subnets.name
-  auth_token = "Qwertyuiopasdfghjkl"
+  auth_token = var.auth_token
 }

@@ -17,11 +17,19 @@ data "aws_subnet_ids" "private_subnets" {
   }
 }
 
+data "aws_cloudformation_stack" "redis_auth_secret_stack" {
+  name = "redis-secret"
+}
+
+data "aws_secretsmanager_secret_version" "redis_auth_token" {
+  secret_id = lookup(data.aws_cloudformation_stack.redis_auth_secret_stack.outputs, "SecretArn", "")
+}
 
 module "redis" {
   source = "./redis"
   private_subnet_id = tolist(data.aws_subnet_ids.private_subnets.ids)[0]
   vpc_id = data.aws_vpc.simple.id
+  auth_token = data.aws_secretsmanager_secret_version.redis_auth_token.secret_string
 }
 
 module "lambda" {
@@ -29,4 +37,5 @@ module "lambda" {
   redis_url = module.redis.redis_url
   private_subnet_id = tolist(data.aws_subnet_ids.private_subnets.ids)[0]
   vpc_id = data.aws_vpc.simple.id
+  secret_arn = data.aws_secretsmanager_secret_version.redis_auth_token.arn
 }

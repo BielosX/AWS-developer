@@ -5,3 +5,7 @@ variable "vpc_id" {
 variable "private_subnet_id" {
   type = string
 }
+
+variable "auth_token" {
+  type = string
+}
