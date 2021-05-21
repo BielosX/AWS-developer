@@ -1,8 +1,12 @@
 package:
-	pip3 install -r requirements.txt -t ${PWD}
+	pip3 download -r requirements.txt
+	unzip redis-*.whl
+	mkdir -p python
+	mv redis python
+	zip -r redis.zip python
 	zip test_lambda.zip handler.py
-	zip -r test_lambda.zip redis
 
 clean:
 	rm -rf redis*
+	rm -rf python
 	rm -f test_lambda.zip

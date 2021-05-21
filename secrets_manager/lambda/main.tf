@@ -2,6 +2,7 @@ data "aws_region" "current" {}
 
 locals {
   zip_file = "${path.module}/test_lambda.zip"
+  redis_file = "${path.module}/redis.zip"
 }
 
 data "aws_iam_policy_document" "lambda_assume_role" {
@@ -65,6 +66,13 @@ resource "aws_security_group" "lambda_sg" {
   }
 }
 
+resource "aws_lambda_layer_version" "redis_lambda_layer" {
+  layer_name = "redis_lambda_layer"
+  filename = local.redis_file
+  source_code_hash = filebase64sha256(local.redis_file)
+  compatible_runtimes = ["python3.8"]
+}
+
 resource "aws_lambda_function" "test_lambda" {
   function_name = "test_function"
   handler = "handler.handle"
@@ -74,6 +82,7 @@ resource "aws_lambda_function" "test_lambda" {
   source_code_hash = filebase64sha256(local.zip_file)
   memory_size = 512
   timeout = 60
+  layers = [aws_lambda_layer_version.redis_lambda_layer.arn]
   vpc_config {
     security_group_ids = [aws_security_group.lambda_sg.id]
     subnet_ids = [var.private_subnet_id]
