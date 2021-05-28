@@ -17,12 +17,12 @@ data "aws_subnet_ids" "private_subnets" {
   }
 }
 
-data "aws_cloudformation_stack" "redis_auth_secret_stack" {
-  name = "redis-secret"
+module "secret" {
+  source = "./secret"
 }
 
 data "aws_secretsmanager_secret_version" "redis_auth_token" {
-  secret_id = lookup(data.aws_cloudformation_stack.redis_auth_secret_stack.outputs, "SecretArn", "")
+  secret_id = module.secret.secret_arn
 }
 
 module "redis" {
