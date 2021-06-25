@@ -6,18 +6,27 @@ from aws_cdk import core as cdk
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 from aws_cdk import aws_lambda as aws_lambda
+from aws_cdk import aws_iam as iam
 import os
 
 
 class LambdaStack(cdk.Stack):
 
-    def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: cdk.Construct, construct_id: str, bucket_name=None, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         dirname = os.path.dirname(__file__)
+        role = iam.Role(self,
+            "s3-full-access-role",
+            assumed_by =  iam.ServicePrincipal("lambda.amazonaws.com"),
+            managed_policies = [iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")])
         aws_lambda.Function(
             self,
             "cdk-demo-lambda",
             handler = "handle.handle",
             runtime = aws_lambda.Runtime("python3.8"),
-            code = aws_lambda.Code.from_asset(path = (dirname + "/src"))
+            code = aws_lambda.Code.from_asset(path = (dirname + "/src")),
+            role = role,
+            environment = {
+                "BUCKET_NAME": bucket_name
+            }
         )

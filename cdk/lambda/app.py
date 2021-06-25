@@ -10,27 +10,17 @@ from aws_cdk import core as cdk
 from aws_cdk import core
 
 from aws_lambda.lambda_stack import LambdaStack
+from bucket.bucket_stack import BucketStack
 
 
 app = core.App()
 account = os.getenv('AWS_ACCOUNT')
 region = os.getenv('AWS_REGION')
 print("Account: {} Region: {}".format(account, region))
-LambdaStack(app, "LambdaStack",
-    # If you don't specify 'env', this stack will be environment-agnostic.
-    # Account/Region-dependent features and context lookups will not work,
-    # but a single synthesized template can be deployed anywhere.
-
-    # Uncomment the next line to specialize this stack for the AWS Account
-    # and Region that are implied by the current CLI configuration.
-
+bucket_stack = BucketStack(app, "BucketStack", env=core.Environment(account=account, region=region))
+lambda_stack = LambdaStack(app,
+    "LambdaStack",
     env=core.Environment(account=account, region=region),
-
-    # Uncomment the next line if you know exactly what Account and Region you
-    # want to deploy the stack to. */
-
-    #env=core.Environment(account='123456789012', region='us-east-1'),
-
-    # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-    )
+    bucket_name = bucket_stack.bucket_name)
+lambda_stack.add_dependency(bucket_stack)
 app.synth()
