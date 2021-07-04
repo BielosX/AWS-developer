@@ -47,23 +47,11 @@ class CognitoUserPoolStack(cdk.Stack):
                 "email": True
             }
         )
-        user_pool.add_client(
-            "user-pool-client",
-            auth_flows={
-                "user_password": True
-            }
-        )
-        user_pool_client = cognito.UserPoolClient(
-            self,
-            "DemoUserPoolClient",
-            user_pool=user_pool,
-            auth_flows={
-                "user_password": True
-            }
-        )
-        cognito.UserPoolDomain(self, "DemoUserPoolDomain",
+        user_pool_domain = cognito.UserPoolDomain(self, "DemoUserPoolDomain",
             user_pool=user_pool,
             cognito_domain={
                 "domain_prefix": "demo-user-pool-{}-{}".format(account, region)
             }
         )
+        self.user_pool = user_pool
+        self.user_pool_domain = user_pool_domain

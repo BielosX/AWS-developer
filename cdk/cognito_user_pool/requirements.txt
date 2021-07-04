@@ -1,1 +1,2 @@
 aws-cdk.aws-cognito
+aws-cdk.aws-apigateway
