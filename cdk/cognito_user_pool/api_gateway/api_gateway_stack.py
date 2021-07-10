@@ -50,13 +50,31 @@ class ApiGatewayStack(cdk.Stack):
             path="{}/{{item}}".format(web_bucket.bucket_name),
             options={
                 'credentials_role': s3_access_role,
+                'integration_responses': [
+                    {
+                        'statusCode': "200",
+                        'response_parameters': {
+                            'method.response.header.Content-Type': 'integration.response.header.Content-Type'
+                        }
+                    }
+                ],
                 'request_parameters': {
-                        'integration.request.path.item': 'method.request.path.file'
+                        'integration.request.path.item': 'method.request.path.file',
+                        'integration.request.header.Content-Type': 'method.request.header.Content-Type'
                     }
             }),
             request_parameters={
-                'method.request.path.file': True
-            }
+                'method.request.path.file': True,
+                'method.request.header.Content-Type': False
+            },
+            method_responses=[
+                {
+                    'statusCode': "200",
+                    'response_parameters': {
+                        'method.response.header.Content-Type': True
+                    }
+                }
+            ],
         )
 
         self.api_gateway =api
