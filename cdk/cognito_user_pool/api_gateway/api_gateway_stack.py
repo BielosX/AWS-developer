@@ -7,22 +7,56 @@ from aws_cdk import core as cdk
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 from aws_cdk import aws_apigateway as api_gateway
-from aws_cdk import aws_cognito as cognito
+from aws_cdk import aws_iam as iam
 
 
 class ApiGatewayStack(cdk.Stack):
 
-    def __init__(self, scope: cdk.Construct, construct_id: str, user_pool=None, user_pool_domain=None, **kwargs) -> None:
+    def __init__(self, scope: cdk.Construct, construct_id: str,
+        user_pool=None,
+        user_pool_domain=None,
+        hello_lambda=None,
+        web_bucket=None,
+        **kwargs) -> None:
+
         super().__init__(scope, construct_id, **kwargs)
 
-        user_pool_client = cognito.UserPoolClient(
-            self,
-            "ApiGatewayUserPoolClient",
-            user_pool=user_pool,
-            auth_flows={
-                "user_password": True
+        api = api_gateway.RestApi(self, "demo-api")
+
+        auth = api_gateway.CognitoUserPoolsAuthorizer(self, "helloAuthorizer",
+            cognito_user_pools=[user_pool]
+        )
+        hello_resource = api.root.add_resource('hello')
+        hello_resource.add_method("GET", api_gateway.LambdaIntegration(hello_lambda),
+            authorizer=auth,
+            authorization_type=api_gateway.AuthorizationType.COGNITO)
+
+        login_resource = api.root.add_resource('login')
+        login_resource.add_method("GET", api_gateway.HttpIntegration(user_pool_domain.base_url()))
+
+        web_resource = api.root.add_resource('web')
+        file_resource = web_resource.add_resource('{file}')
+
+        s3_access_role = iam.Role(self, "S3AccessRole",
+            assumed_by=iam.ServicePrincipal('apigateway.amazonaws.com'),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name('AmazonS3ReadOnlyAccess')
+            ]
+        )
+
+        file_resource.add_method("GET", api_gateway.AwsIntegration(
+            service="s3",
+            integration_http_method='GET',
+            path="{}/{{item}}".format(web_bucket.bucket_name),
+            options={
+                'credentials_role': s3_access_role,
+                'request_parameters': {
+                        'integration.request.path.item': 'method.request.path.file'
+                    }
+            }),
+            request_parameters={
+                'method.request.path.file': True
             }
         )
-        login_url = user_pool_domain.sign_in_url(client=user_pool_client, redirect_uri="https://example.com")
-        api = api_gateway.RestApi(self, "demo-api")
-        api.root.add_method("GET", api_gateway.HttpIntegration(login_url))
+
+        self.api_gateway =api

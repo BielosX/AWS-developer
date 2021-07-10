@@ -1,2 +1,6 @@
 aws-cdk.aws-cognito
 aws-cdk.aws-apigateway
+aws-cdk.aws-lambda
+aws-cdk.aws-ssm
+aws-cdk.aws-s3
+aws-cdk.aws-s3-deployment
