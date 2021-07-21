@@ -78,104 +78,32 @@
         }
       }
     },
-    "/login": {
+    "/auth/{proxy+}": {
       "x-amazon-apigateway-any-method": {
         "parameters": [
           {
-            "name": "response_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "client_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "redirect_uri",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "Content-Length",
-            "in": "header",
-            "required": false,
+            "name": "proxy",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "200 OK",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "302": {
-            "description": "302",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "Location": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
+        "responses": {},
         "x-amazon-apigateway-integration": {
           "responses": {
-            "2\\d{2}": {
-              "statusCode": 200,
-              "responseParameters": {
-                "method.response.header.Content-Type" : "integration.response.header.Content-Type"
-              }
-            },
-            "302": {
-              "statusCode": 302,
-              "responseParameters": {
-                "method.response.header.Content-Type" : "integration.response.header.Content-Type",
-                "method.response.header.Location" : "integration.response.header.Location"
-              }
+            "default": {
+              "statusCode": "200"
             }
           },
-          "uri": "https://${cognito_domain_name}.auth.${region}.amazoncognito.com/login",
+          "requestParameters": {
+            "integration.request.path.proxy": "method.request.path.proxy"
+          },
+          "uri": "https://${cognito_domain_name}.auth.${region}.amazoncognito.com/{proxy}",
           "passthroughBehavior": "when_no_match",
           "httpMethod": "ANY",
-          "type": "http",
-          "requestParameters": {
-            "integration.request.header.Content-Type": "method.request.header.Content-Type",
-            "integration.request.header.Content-Length": "method.request.header.Content-Length",
-            "integration.request.querystring.response_type": "method.request.querystring.response_type",
-            "integration.request.querystring.client_id": "method.request.querystring.client_id",
-            "integration.request.querystring.redirect_uri": "method.request.querystring.redirect_uri"
-          }
+          "type": "http_proxy"
         }
       }
     }
