@@ -64,7 +64,6 @@ resource "aws_api_gateway_rest_api" "api" {
     s3_access_role = aws_iam_role.s3_access_role.arn
     bucket_name = aws_s3_bucket.web_bucket.id
     region = "eu-west-1"
-    cognito_domain_name = aws_cognito_user_pool_domain.demo-domain.domain
   })
 }
 

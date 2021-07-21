@@ -77,35 +77,6 @@
           }
         }
       }
-    },
-    "/auth/{proxy+}": {
-      "x-amazon-apigateway-any-method": {
-        "parameters": [
-          {
-            "name": "proxy",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {},
-        "x-amazon-apigateway-integration": {
-          "responses": {
-            "default": {
-              "statusCode": "200"
-            }
-          },
-          "requestParameters": {
-            "integration.request.path.proxy": "method.request.path.proxy"
-          },
-          "uri": "https://${cognito_domain_name}.auth.${region}.amazoncognito.com/{proxy}",
-          "passthroughBehavior": "when_no_match",
-          "httpMethod": "ANY",
-          "type": "http_proxy"
-        }
-      }
     }
   }
 }
