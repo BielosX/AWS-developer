@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "eu-west-1"
+  region = var.region
 }
 
 data "aws_iam_policy_document" "api_gateway_assume_role" {
@@ -63,7 +63,7 @@ resource "aws_api_gateway_rest_api" "api" {
   body = templatefile("${path.module}/openapi.json.tmpl", {
     s3_access_role = aws_iam_role.s3_access_role.arn
     bucket_name = aws_s3_bucket.web_bucket.id
-    region = "eu-west-1"
+    region = var.region
   })
 }
 
@@ -125,6 +125,6 @@ resource "aws_s3_bucket_object" "client_id" {
   content = jsonencode(
   {
     "client_id"= aws_cognito_user_pool_client.web-client.id
-    "cognito_domain"="${aws_cognito_user_pool_domain.demo-domain.domain}.auth.eu-west-1.amazoncognito.com"
+    "cognito_domain"="${aws_cognito_user_pool_domain.demo-domain.domain}.auth.${var.region}.amazoncognito.com"
   })
 }
