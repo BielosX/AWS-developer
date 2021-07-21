@@ -1,0 +1,82 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "demo",
+    "version": "1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "headers": {
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws",
+          "uri": "arn:aws:apigateway:${region}:s3:path/${bucket_name}/index.html",
+          "httpMethod": "GET",
+          "credentials": "${s3_access_role}",
+          "responses": {
+            "2\\d{2}": {
+              "statusCode": 200,
+              "responseParameters": {
+                "method.response.header.Content-Type" : "integration.response.header.Content-Type"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{file}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "headers": {
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws",
+          "uri": "arn:aws:apigateway:${region}:s3:path/${bucket_name}/{item}",
+          "httpMethod": "GET",
+          "credentials": "${s3_access_role}",
+          "requestParameters": {
+            "integration.request.path.item": "method.request.path.file"
+          },
+          "responses": {
+            "2\\d{2}": {
+              "statusCode": 200,
+              "responseParameters": {
+                "method.response.header.Content-Type" : "integration.response.header.Content-Type"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
