@@ -119,8 +119,12 @@ resource "aws_cognito_user_pool_client" "web-client" {
 
 resource "aws_s3_bucket_object" "client_id" {
   bucket = aws_s3_bucket.web_bucket.id
-  key = "client_id.json"
+  key = "metadata.json"
   content_type = "application/json"
   acl = "public-read"
-  content = aws_cognito_user_pool_client.web-client.id
+  content = jsonencode(
+  {
+    "client_id"= aws_cognito_user_pool_client.web-client.id
+    "cognito_domain"="${aws_cognito_user_pool_domain.demo-domain.domain}.auth.eu-west-1.amazoncognito.com"
+  })
 }
