@@ -117,7 +117,7 @@ resource "aws_cognito_user_pool_client" "web-client" {
   supported_identity_providers = ["COGNITO"]
 }
 
-resource "aws_s3_bucket_object" "client_id" {
+resource "aws_s3_bucket_object" "metadata" {
   bucket = aws_s3_bucket.web_bucket.id
   key = "metadata.json"
   content_type = "application/json"
