@@ -84,7 +84,7 @@
           {
             "name": "response_type",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -92,7 +92,7 @@
           {
             "name": "client_id",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -100,7 +100,23 @@
           {
             "name": "redirect_uri",
             "in": "query",
-            "required": true,
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Content-Length",
+            "in": "header",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -154,6 +170,8 @@
           "httpMethod": "ANY",
           "type": "http",
           "requestParameters": {
+            "integration.request.header.Content-Type": "method.request.header.Content-Type",
+            "integration.request.header.Content-Length": "method.request.header.Content-Length",
             "integration.request.querystring.response_type": "method.request.querystring.response_type",
             "integration.request.querystring.client_id": "method.request.querystring.client_id",
             "integration.request.querystring.redirect_uri": "method.request.querystring.redirect_uri"

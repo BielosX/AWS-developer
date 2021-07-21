@@ -49,6 +49,15 @@ resource "aws_s3_bucket_object" "web_page_html" {
   acl = "public-read"
 }
 
+resource "aws_s3_bucket_object" "web_page_js" {
+  for_each = fileset("${path.module}/src", "*.js")
+  content = file("${path.module}/src/${each.value}")
+  bucket = aws_s3_bucket.web_bucket.id
+  content_type = "application/javascript"
+  key = each.value
+  acl = "public-read"
+}
+
 resource "aws_api_gateway_rest_api" "api" {
   name = "demo-api"
   body = templatefile("${path.module}/openapi.json.tmpl", {
@@ -82,12 +91,16 @@ resource "aws_cognito_user_pool_client" "web-client" {
   user_pool_id = aws_cognito_user_pool.demo-user-pool.id
   allowed_oauth_flows = ["implicit"]
   callback_urls = ["${aws_api_gateway_stage.prod.invoke_url}/token.js"]
+  explicit_auth_flows = ["USER_PASSWORD_AUTH"]
+  generate_secret = false
+  allowed_oauth_scopes = ["aws.cognito.signin.user.admin"]
+  supported_identity_providers = ["COGNITO"]
 }
 
 resource "aws_s3_bucket_object" "client_id" {
   bucket = aws_s3_bucket.web_bucket.id
   key = "client_id.json"
-  content_type = "application/javascript"
+  content_type = "application/json"
   acl = "public-read"
   content = aws_cognito_user_pool_client.web-client.id
 }
