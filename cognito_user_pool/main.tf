@@ -32,6 +32,21 @@ resource "aws_s3_bucket" "web_bucket" {
 
 resource "aws_cognito_user_pool" "demo-user-pool" {
   name = "demo-user-pool"
+  admin_create_user_config {
+    allow_admin_create_user_only = true
+  }
+  mfa_configuration = "OFF"
+  schema {
+    attribute_data_type = "String"
+    name = "email"
+    mutable = true
+    required = true
+  }
+  lifecycle {
+    ignore_changes = [schema]
+  }
+  username_attributes = ["email"]
+  auto_verified_attributes = ["email"]
 }
 
 resource "aws_cognito_user_pool_domain" "demo-domain" {
@@ -45,15 +60,6 @@ resource "aws_s3_bucket_object" "web_page_html" {
   content = file("${path.module}/src/${each.value}")
   bucket = aws_s3_bucket.web_bucket.id
   content_type = "text/html"
-  key = each.value
-  acl = "public-read"
-}
-
-resource "aws_s3_bucket_object" "web_page_js" {
-  for_each = fileset("${path.module}/src", "*.js")
-  content = file("${path.module}/src/${each.value}")
-  bucket = aws_s3_bucket.web_bucket.id
-  content_type = "application/javascript"
   key = each.value
   acl = "public-read"
 }
@@ -109,12 +115,14 @@ resource "aws_api_gateway_stage" "prod" {
 resource "aws_cognito_user_pool_client" "web-client" {
   name = "web-client"
   user_pool_id = aws_cognito_user_pool.demo-user-pool.id
-  allowed_oauth_flows = ["implicit"]
-  callback_urls = ["${aws_api_gateway_stage.prod.invoke_url}/token.js"]
-  explicit_auth_flows = ["USER_PASSWORD_AUTH"]
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows = ["implicit", "code"]
+  callback_urls = ["${aws_api_gateway_stage.prod.invoke_url}/token.html"]
+  explicit_auth_flows = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
   generate_secret = false
-  allowed_oauth_scopes = ["aws.cognito.signin.user.admin"]
+  allowed_oauth_scopes = ["profile", "email", "openid"]
   supported_identity_providers = ["COGNITO"]
+  prevent_user_existence_errors = "ENABLED"
 }
 
 resource "aws_s3_bucket_object" "metadata" {
@@ -124,7 +132,8 @@ resource "aws_s3_bucket_object" "metadata" {
   acl = "public-read"
   content = jsonencode(
   {
-    "client_id"= aws_cognito_user_pool_client.web-client.id
-    "cognito_domain"="${aws_cognito_user_pool_domain.demo-domain.domain}.auth.${var.region}.amazoncognito.com"
+    "clientId" = aws_cognito_user_pool_client.web-client.id
+    "cognitoDomain"="${aws_cognito_user_pool_domain.demo-domain.domain}.auth.${var.region}.amazoncognito.com"
+    "redirectUri"="${aws_api_gateway_stage.prod.invoke_url}/token.html"
   })
 }

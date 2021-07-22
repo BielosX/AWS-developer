@@ -1,0 +1,16 @@
+<body onload="getToken()">
+</body>
+<script>
+function getToken() {
+    var hash = window.location.hash.substring(1);
+    var variables = hash.split('&');
+    console.log(variables);
+    for (var i = 0; i < variables.length; i++) {
+        var parts = variables[i].split('=');
+        if (parts[0] == "id_token") {
+            localStorage.setItem('token', parts[1]);
+        }
+    }
+    window.location.href = 'index.html';
+}
+</script>

@@ -1,2 +1,26 @@
-<h1>Hello</h1>
-<a href="prod/test.html">Test</a>
+<body onload="getToken()">
+    <h1>Hello</h1>
+    <a href="prod/test.html">Test</a>
+</body>
+<script>
+function getMetadata() {
+    var req = new XMLHttpRequest();
+    req.open('GET', 'prod/metadata.json', false);
+    req.send(null);
+    if (req.status == 200) {
+        return req.responseText;
+    }
+    else {
+        return {};
+    }
+}
+
+function getToken() {
+    if (!localStorage.getItem('token')) {
+        var meta = JSON.parse(getMetadata());
+        var uri = 'https://' + meta.cognitoDomain + '/login?response_type=token&client_id=' + meta.clientId + '&redirect_uri=' + meta.redirectUri;
+        console.log(uri);
+        window.location = uri;
+    }
+}
+</script>

@@ -26,7 +26,7 @@ class WebDeploymentStack(cdk.Stack):
                 "flows": {
                     "implicit_code_grant": True
                 },
-                "callback_urls": ["{}/web/token.js".format(api_gateway.url)]
+                "callback_urls": ["{}/web/token.html".format(api_gateway.url)]
             }
         )
         directory = Path("{}/target".format(dirname))
