@@ -23,7 +23,7 @@
           "type": "aws",
           "uri": "arn:aws:apigateway:${region}:s3:path/${bucket_name}/index.html",
           "httpMethod": "GET",
-          "credentials": "${s3_access_role}",
+          "credentials": "${api_gw_role}",
           "responses": {
             "2\\d{2}": {
               "statusCode": 200,
@@ -63,7 +63,7 @@
           "type": "aws",
           "uri": "arn:aws:apigateway:${region}:s3:path/${bucket_name}/{item}",
           "httpMethod": "GET",
-          "credentials": "${s3_access_role}",
+          "credentials": "${api_gw_role}",
           "requestParameters": {
             "integration.request.path.item": "method.request.path.file"
           },
@@ -75,6 +75,42 @@
               }
             }
           }
+        }
+      }
+    },
+    "/api/user": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "200 OK"
+          }
+        },
+        "security": [
+          {
+            "MyUserPool": []
+          }
+        ],
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "uri": "${lambda_invoke_arn}",
+          "httpMethod": "POST",
+          "credentials": "${api_gw_role}"
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "MyUserPool": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header",
+        "x-amazon-apigateway-authtype": "cognito_user_pools",
+        "x-amazon-apigateway-authorizer": {
+          "type": "cognito_user_pools",
+          "providerARNs": [
+            "${user_pool_arn}"
+          ]
         }
       }
     }

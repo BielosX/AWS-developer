@@ -1,6 +1,6 @@
 <body onload="getToken()">
     <h1>Hello</h1>
-    <a href="prod/test.html">Test</a>
+    <button onclick="getUserData()">Try</button>
 </body>
 <script>
 function getMetadata() {
@@ -21,6 +21,30 @@ function getToken() {
         var uri = 'https://' + meta.cognitoDomain + '/login?response_type=token&client_id=' + meta.clientId + '&redirect_uri=' + meta.redirectUri;
         console.log(uri);
         window.location = uri;
+    }
+}
+
+function getUserData() {
+    var token = localStorage.getItem('token');
+    var req = new XMLHttpRequest();
+    req.open('GET', 'api/user', false);
+    req.setRequestHeader("Authorization", token);
+    req.send(null);
+    if (req.status == 200) {
+        var response = JSON.parse(req.responseText);
+        var userData = document.getElementById('user-data');
+        if (!!userData) {
+            document.body.removeChild(userData);
+        }
+        var dataDiv = document.createElement('div');
+        dataDiv.id = 'user-data';
+        document.body.appendChild(dataDiv);
+        var email = document.createElement('p');
+        email.innerHTML = response.email;
+        dataDiv.appendChild(email);
+        var username = document.createElement('p');
+        username.innerHTML = response.username;
+        dataDiv.appendChild(username);
     }
 }
 </script>

@@ -13,13 +13,67 @@ data "aws_iam_policy_document" "api_gateway_assume_role" {
   }
 }
 
-resource "aws_iam_role" "s3_access_role" {
+resource "aws_iam_role" "api_gateway_role" {
   assume_role_policy = data.aws_iam_policy_document.api_gateway_assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "attach_s3_read_only" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-  role = aws_iam_role.s3_access_role.id
+  role = aws_iam_role.api_gateway_role.id
+}
+
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    effect = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      identifiers = ["lambda.amazonaws.com"]
+      type = "Service"
+    }
+  }
+}
+
+data "aws_iam_policy_document" "lambda_invoke" {
+  statement {
+    effect = "Allow"
+    actions = ["lambda:InvokeFunction"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_invoke" {
+  policy = data.aws_iam_policy_document.lambda_invoke.json
+  role = aws_iam_role.api_gateway_role.id
+}
+
+resource "aws_iam_role" "lambda_role" {
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "attach_cognito_read_only" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonCognitoReadOnly"
+  role = aws_iam_role.lambda_role.id
+}
+
+resource "aws_iam_role_policy_attachment" "attach_basic_execution" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role = aws_iam_role.lambda_role.id
+}
+
+data "archive_file" "lambda_archive" {
+  output_path = "${path.module}/lambda.zip"
+  source_file = "${path.module}/handle.py"
+  type = "zip"
+}
+
+resource "aws_lambda_function" "user_details_lambda" {
+  function_name = "user-details-lambda"
+  handler = "handle.handle"
+  role = aws_iam_role.lambda_role.arn
+  runtime = "python3.8"
+  timeout = 60
+  filename = data.archive_file.lambda_archive.output_path
+  source_code_hash = data.archive_file.lambda_archive.output_base64sha256
 }
 
 resource "aws_s3_bucket" "web_bucket" {
@@ -67,9 +121,11 @@ resource "aws_s3_bucket_object" "web_page_html" {
 resource "aws_api_gateway_rest_api" "api" {
   name = "demo-api"
   body = templatefile("${path.module}/openapi.json.tmpl", {
-    s3_access_role = aws_iam_role.s3_access_role.arn
+    api_gw_role = aws_iam_role.api_gateway_role.arn
     bucket_name = aws_s3_bucket.web_bucket.id
     region = var.region
+    lambda_invoke_arn = aws_lambda_function.user_details_lambda.invoke_arn
+    user_pool_arn = aws_cognito_user_pool.demo-user-pool.arn
   })
 }
 
