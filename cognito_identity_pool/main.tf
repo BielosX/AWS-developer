@@ -6,22 +6,14 @@ resource "aws_cognito_user_pool" "demo-user-pool" {
   name = "demo-user-pool"
 }
 
-resource "aws_cognito_resource_server" "demo-resource-server" {
-  identifier = "demo"
-  name = "demo-resource-server"
-  user_pool_id = aws_cognito_user_pool.demo-user-pool.id
-  scope {
-    scope_description = "test scope"
-    scope_name = "test"
-  }
-}
-
 resource "aws_cognito_user_pool_client" "demo-client" {
   name = "demo-client"
   user_pool_id = aws_cognito_user_pool.demo-user-pool.id
-  generate_secret = true
-  allowed_oauth_flows = ["client_credentials"]
-  allowed_oauth_scopes = aws_cognito_resource_server.demo-resource-server.scope_identifiers
+  generate_secret = false
+  allowed_oauth_flows = ["implicit"]
+  allowed_oauth_scopes = ["email", "profile", "openid"]
+  callback_urls = ["http://localhost"]
+  explicit_auth_flows = ["USER_PASSWORD_AUTH"]
   allowed_oauth_flows_user_pool_client = true
 }
 
@@ -34,12 +26,6 @@ resource "aws_ssm_parameter" "demo-client-id" {
   name = "/cognito/demo-client/client-id"
   type = "String"
   value = aws_cognito_user_pool_client.demo-client.id
-}
-
-resource "aws_ssm_parameter" "demo-client-secret" {
-  name = "/cognito/demo-client/client-secret"
-  type = "String"
-  value = aws_cognito_user_pool_client.demo-client.client_secret
 }
 
 resource "aws_ssm_parameter" "demo-domain-url" {
