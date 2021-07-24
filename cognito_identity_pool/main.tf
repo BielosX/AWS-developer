@@ -15,6 +15,7 @@ resource "aws_cognito_user_pool_client" "demo-client" {
   callback_urls = ["http://localhost"]
   explicit_auth_flows = ["USER_PASSWORD_AUTH"]
   allowed_oauth_flows_user_pool_client = true
+  supported_identity_providers = ["COGNITO"]
 }
 
 resource "aws_cognito_user_pool_domain" "demo-domain" {

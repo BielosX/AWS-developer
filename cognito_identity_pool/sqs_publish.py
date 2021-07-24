@@ -74,6 +74,16 @@ def send_message(queue_url, access_key_id, secret_key, session_token, message):
     )
     return response['MessageId']
 
+def purge_queue(queue_url, access_key_id, secret_key, session_token):
+    sqs_client = boto3.client('sqs',
+        aws_access_key_id=access_key_id,
+        aws_secret_access_key=secret_key,
+        aws_session_token=session_token
+    )
+    sqs_client.purge_queue(
+        QueueUrl=queue_url
+    )
+
 
 def main():
     parser = argparse.ArgumentParser(description='Sends message to SQS.')
@@ -86,6 +96,7 @@ def main():
     parser.add_argument('--password')
     parser.add_argument('--queue-url')
     parser.add_argument('--message')
+    parser.add_argument('--purge', action='store_true')
     args = vars(parser.parse_args())
     token = get_token(args['client_id'], args['user'], args['password'])
     user_pool = args['user_pool']
@@ -94,8 +105,11 @@ def main():
     access_key_id = credentials['AccessKeyId']
     secret_key = credentials['SecretKey']
     session_token = credentials['SessionToken']
-    message_id = send_message(args['queue_url'], access_key_id, secret_key, session_token, args['message'])
-    print("Message ID: {}".format(message_id))
+    if 'purge' in args and args['purge']:
+        purge_queue(args['queue_url'], access_key_id, secret_key, session_token)
+    else:
+        message_id = send_message(args['queue_url'], access_key_id, secret_key, session_token, args['message'])
+        print("Message ID: {}".format(message_id))
 
 if __name__ == "__main__":
     main()
