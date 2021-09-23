@@ -45,12 +45,10 @@ data "aws_iam_policy_document" "ec2-assume-role" {
       identifiers = ["ec2.amazonaws.com"]
       type        = "Service"
     }
-    condition {
-      test     = "IpAddress"
-      values   = [aws_eip.demo-eip.public_ip]
-      variable = "aws:SourceIp"
-    }
   }
+}
+locals {
+  allowed_tag = "S3AccessAllowed"
 }
 
 data "aws_iam_policy_document" "ec2-s3-bucket-access" {
@@ -69,6 +67,11 @@ data "aws_iam_policy_document" "ec2-s3-bucket-access" {
       values   = [aws_eip.demo-eip.public_ip]
       variable = "aws:SourceIp"
     }
+    condition {
+      test     = "StringEquals"
+      values   = ["YES"]
+      variable = "aws:PrincipalTag/${local.allowed_tag}"
+    }
   }
   statement {
     effect = "Allow"
@@ -79,6 +82,11 @@ data "aws_iam_policy_document" "ec2-s3-bucket-access" {
       values   = [aws_eip.demo-eip.public_ip]
       variable = "aws:SourceIp"
     }
+    condition {
+      test     = "StringEquals"
+      values   = ["YES"]
+      variable = "aws:PrincipalTag/${local.allowed_tag}"
+    }
   }
 }
 
@@ -87,6 +95,9 @@ resource "aws_iam_role" "demo-role" {
   inline_policy {
     name = "DemoPolicy"
     policy = data.aws_iam_policy_document.ec2-s3-bucket-access.json
+  }
+  tags = {
+    (local.allowed_tag) = "YES"
   }
 }
 
