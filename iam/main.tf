@@ -2,6 +2,10 @@ provider "aws" {
   region = "eu-west-1"
 }
 
+locals {
+  allowed_tag = "S3AccessAllowed"
+}
+
 module "vpc" {
   source = "./vpc"
 }
@@ -26,14 +30,28 @@ resource "aws_security_group" "demo-security-group" {
   }
   egress {
     cidr_blocks = ["0.0.0.0/0"]
+    from_port = 22
+    to_port   = 22
+    protocol  = "tcp"
+  }
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
     from_port = 443
     to_port   = 443
     protocol  = "tcp"
   }
-}
-
-resource "aws_eip" "demo-eip" {
-  vpc = true
+  ingress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 443
+    to_port   = 443
+    protocol  = "tcp"
+  }
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port = -1
+    to_port   = -1
+    protocol  = "icmp"
+  }
 }
 
 data "aws_iam_policy_document" "ec2-assume-role" {
@@ -46,9 +64,6 @@ data "aws_iam_policy_document" "ec2-assume-role" {
       type        = "Service"
     }
   }
-}
-locals {
-  allowed_tag = "S3AccessAllowed"
 }
 
 data "aws_iam_policy_document" "ec2-s3-bucket-access" {
@@ -63,9 +78,9 @@ data "aws_iam_policy_document" "ec2-s3-bucket-access" {
       variable = "s3:prefix"
     }
     condition {
-      test     = "IpAddress"
-      values   = [aws_eip.demo-eip.public_ip]
-      variable = "aws:SourceIp"
+      test     = "StringEquals"
+      values   = [module.vpc.s3-endpoint-id]
+      variable = "aws:SourceVpce"
     }
     condition {
       test     = "StringEquals"
@@ -76,11 +91,11 @@ data "aws_iam_policy_document" "ec2-s3-bucket-access" {
   statement {
     effect = "Allow"
     actions = ["s3:GetObject", "s3:PutObject"]
-    resources = ["${aws_s3_bucket.demo-bucket.arn}/$${aws:SourceIp}/*"]
+    resources = ["${aws_s3_bucket.demo-bucket.arn}/$${aws:VpcSourceIp}/*"]
     condition {
-      test     = "IpAddress"
-      values   = [aws_eip.demo-eip.public_ip]
-      variable = "aws:SourceIp"
+      test     = "StringEquals"
+      values   = [module.vpc.s3-endpoint-id]
+      variable = "aws:SourceVpce"
     }
     condition {
       test     = "StringEquals"
@@ -101,6 +116,11 @@ resource "aws_iam_role" "demo-role" {
   }
 }
 
+resource "aws_iam_role_policy_attachment" "ssm_managed" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role = aws_iam_role.demo-role.id
+}
+
 data "aws_ami" "amazon-linux-2" {
   owners = ["amazon"]
   most_recent = true
@@ -119,15 +139,17 @@ resource "aws_iam_instance_profile" "instance-profile" {
 }
 
 resource "aws_instance" "demo-instance" {
+  depends_on = [aws_iam_role.demo-role]
+  key_name = "MBIrelandKP"
   ami = data.aws_ami.amazon-linux-2.id
-  subnet_id = module.vpc.public_subnet_id
-  associate_public_ip_address = true
+  subnet_id = module.vpc.private_subnet_id
   instance_type = "t3.micro"
   vpc_security_group_ids = [aws_security_group.demo-security-group.id]
   iam_instance_profile = aws_iam_instance_profile.instance-profile.name
-}
-
-resource "aws_eip_association" "ec2-eip-assoc" {
-  allocation_id = aws_eip.demo-eip.id
-  instance_id = aws_instance.demo-instance.id
+  user_data = <<-EOT
+    #!/bin/bash -xe
+    exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+      wget https://s3.eu-west-1.amazonaws.com/amazon-ssm-eu-west-1/latest/linux_amd64/amazon-ssm-agent.rpm
+      yum localinstall -y amazon-ssm-agent.rpm
+  EOT
 }
