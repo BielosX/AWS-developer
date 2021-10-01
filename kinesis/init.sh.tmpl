@@ -1,0 +1,61 @@
+#!/bin/bash
+
+mkdir -p /opt/producer
+chmod +rw /opt/producer
+cat <<EOT >> /opt/producer/producer.py
+from datetime import datetime
+import time
+import os
+
+path = "/opt/producer/producer.txt"
+out_file = open(path, "a")
+os.chmod(path, 0o777)
+while True:
+  out_file.write("Test message {}\n".format(datetime.now()))
+  out_file.flush()
+  file_size = os.stat(out_file).st_size
+  if file_size > 4096:
+    out_file.close()
+    os.remove(path)
+    out_file = open(path, "a")
+    os.chmod(path, 0o777)
+  time.sleep(2.0)
+EOT
+
+cat <<EOT >> /usr/lib/systemd/system/producer.service
+[Unit]
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/python3 /opt/producer/producer.py
+
+[Install]
+WantedBy=multi-user.target
+EOT
+
+systemctl enable producer.service
+systemctl start producer.service
+
+yum update
+yum -y install aws-kinesis-agent
+
+rm -f /etc/aws-kinesis/agent.json
+cat <<EOT >> /etc/aws-kinesis/agent.json
+{
+  "cloudwatch.emitMetrics": true,
+  "kinesis.endpoint": "kinesis.eu-west-1.amazonaws.com",
+  "cloudwatch.endpoint": "monitoring.eu-west-1.amazonaws.com",
+   "flows": [
+        {
+            "filePattern": "/opt/producer/producer.txt",
+            "kinesisStream": "${kinesis_stream}"
+        }
+   ]
+}
+EOT
+
+systemctl enable aws-kinesis-agent
+systemctl start aws-kinesis-agent
