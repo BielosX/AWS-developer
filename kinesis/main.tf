@@ -88,3 +88,52 @@ resource "aws_instance" "demo-producer" {
     kinesis_stream: aws_kinesis_stream.demo-stream.name
   })
 }
+
+data "aws_iam_policy_document" "lambda-assume-role" {
+  statement {
+    effect = "Allow"
+    principals {
+      identifiers = ["lambda.amazonaws.com"]
+      type = "Service"
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "lambda-role" {
+  assume_role_policy = data.aws_iam_policy_document.lambda-assume-role.json
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole",
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  ]
+}
+
+data "archive_file" "lambda-zip" {
+  output_path = "${path.module}/consumer.zip"
+  source_file = "${path.module}/consumer.py"
+  type = "zip"
+}
+
+locals {
+  function_names = toset([for i in range(2): "kinesis-consumer-${i}"])
+}
+
+resource "aws_lambda_function" "lambda-consumers" {
+  for_each = local.function_names
+  function_name = each.value
+  role = aws_iam_role.lambda-role.arn
+  runtime = "python3.8"
+  timeout = 60
+  handler = "consumer.handle"
+  filename = data.archive_file.lambda-zip.output_path
+  source_code_hash = data.archive_file.lambda-zip.output_base64sha256
+  memory_size = 512
+}
+
+resource "aws_lambda_event_source_mapping" "event-mappings" {
+  depends_on = [aws_lambda_function.lambda-consumers]
+  for_each = local.function_names
+  event_source_arn = aws_kinesis_stream.demo-stream.arn
+  function_name = each.value
+  starting_position = "LATEST"
+}
