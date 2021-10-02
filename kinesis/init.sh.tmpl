@@ -46,12 +46,17 @@ rm -f /etc/aws-kinesis/agent.json
 cat <<EOT >> /etc/aws-kinesis/agent.json
 {
   "cloudwatch.emitMetrics": true,
-  "kinesis.endpoint": "kinesis.eu-west-1.amazonaws.com",
-  "cloudwatch.endpoint": "monitoring.eu-west-1.amazonaws.com",
+  "kinesis.endpoint": "kinesis.${region}.amazonaws.com",
+  "cloudwatch.endpoint": "monitoring.${region}.amazonaws.com",
+  "firehose.endpoint": "firehose.${region}.amazonaws.com",
    "flows": [
         {
             "filePattern": "/opt/producer/producer.txt",
             "kinesisStream": "${kinesis_stream}"
+        },
+        {
+            "filePattern": "/opt/producer/producer.txt",
+            "deliveryStream": "${firehose_stream}"
         }
    ]
 }
