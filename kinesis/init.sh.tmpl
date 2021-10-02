@@ -7,14 +7,16 @@ from datetime import datetime
 import time
 import os
 
+print("Producer started")
 path = "/opt/producer/producer.txt"
 out_file = open(path, "a")
 os.chmod(path, 0o777)
 while True:
   out_file.write("Test message {}\n".format(datetime.now()))
   out_file.flush()
-  file_size = os.stat(out_file).st_size
+  file_size = os.stat(path).st_size
   if file_size > 4096:
+    print("File larger than 4096 bytes. Recreating.")
     out_file.close()
     os.remove(path)
     out_file = open(path, "a")
@@ -30,7 +32,9 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=5
-ExecStart=/usr/bin/python3 /opt/producer/producer.py
+ExecStart=/usr/bin/python3 -u /opt/producer/producer.py
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
