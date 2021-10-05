@@ -103,6 +103,10 @@ resource "aws_elastic_beanstalk_environment" "worker-env" {
   solution_stack_name = "64bit Amazon Linux 2 v3.3.6 running Python 3.8"
   version_label = aws_elastic_beanstalk_application_version.init-version.name
 
+  lifecycle {
+    ignore_changes = [version_label]
+  }
+
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name = "IamInstanceProfile"
