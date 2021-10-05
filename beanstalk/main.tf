@@ -99,4 +99,34 @@ resource "aws_elastic_beanstalk_environment" "worker-env" {
     name = "MaxSize"
     value = 4
   }
+  setting {
+    namespace = "aws:autoscaling:updatepolicy:rollingupdate"
+    name = "RollingUpdateEnabled"
+    value = "true"
+  }
+  setting {
+    namespace = "aws:autoscaling:updatepolicy:rollingupdate"
+    name = "RollingUpdateType"
+    value = "Time"
+  }
+  setting {
+    namespace = "aws:autoscaling:updatepolicy:rollingupdate"
+    name = "Timeout"
+    value = "PT30M"
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:command"
+    name = "DeploymentPolicy"
+    value = "RollingWithAdditionalBatch"
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:command"
+    name = "BatchSizeType"
+    value = "Fixed"
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:command"
+    name = "BatchSize"
+    value = 1
+  }
 }
