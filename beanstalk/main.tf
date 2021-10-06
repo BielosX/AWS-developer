@@ -5,3 +5,8 @@ provider "aws" {
 module "worker" {
   source = "./worker"
 }
+
+module "webapp" {
+  source = "./webapp"
+  worker_queue_url = module.worker.worker_queue_url
+}
