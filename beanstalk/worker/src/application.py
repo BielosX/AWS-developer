@@ -11,7 +11,7 @@ def handle():
 
 @app.route("/cron", methods=["POST"])
 def cron():
-    print("Triggered by Cron")
+    print("Triggered by Cron", flush=True)
     return "Ok"
 
 if __name__ == "__main__":
