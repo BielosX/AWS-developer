@@ -13,6 +13,11 @@ def get_instance_id():
     conn.close()
     return content.decode('ascii')
 
+def get_config():
+    with open('/etc/webapp/config.json', 'r') as f:
+        content = f.read()
+        return json.loads(content)
+
 app = Flask(__name__)
 
 worker_queue_url = os.environ['WORKER_QUEUE_URL']
@@ -20,6 +25,9 @@ worker_queue_url = os.environ['WORKER_QUEUE_URL']
 client = boto3.client('sqs', region_name="eu-west-1")
 
 instance_id = get_instance_id()
+
+config = get_config()
+hello_message = config['helloMessage']
 
 @app.route("/messages", methods=["POST"])
 def messages():
@@ -31,12 +39,12 @@ def messages():
         MessageBody=body_str
     )
     ip = request.headers.get('X-Forwarded-For')
-    return "Ok from {}. Requested by {}".format(instance_id, ip)
+    return "Ok from {}. Requested by {}. HelloMessage: {}".format(instance_id, ip, hello_message)
 
 @app.route("/appstatus/health", methods=["GET"])
 def health():
     ip = request.headers.get('X-Forwarded-For')
-    return "Ok from {}. Requested by {}".format(instance_id, ip)
+    return "Ok from {}. Requested by {}. HelloMessage: {}".format(instance_id, ip, hello_message)
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8000)
