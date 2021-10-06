@@ -30,11 +30,13 @@ def messages():
         QueueUrl=worker_queue_url,
         MessageBody=body_str
     )
-    return "Ok from {}".format(instance_id)
+    ip = request.headers.get('X-Forwarded-For')
+    return "Ok from {}. Requested by {}".format(instance_id, ip)
 
 @app.route("/appstatus/health", methods=["GET"])
 def health():
-    return "Ok from {}".format(instance_id)
+    ip = request.headers.get('X-Forwarded-For')
+    return "Ok from {}. Requested by {}".format(instance_id, ip)
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8000)
