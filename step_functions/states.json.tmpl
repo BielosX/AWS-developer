@@ -1,0 +1,16 @@
+{
+  "Version": "1.0",
+  "TimeoutSeconds": 60,
+  "StartAt": "First",
+  "States": {
+    "First": {
+      "Type": "Task",
+      "Resource": "${first_lambda_arn}",
+      "Next": "Second"
+    },
+    "Second": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}
