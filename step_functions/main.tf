@@ -51,11 +51,22 @@ resource "aws_lambda_function" "first-sfn-lambda" {
   source_code_hash = data.archive_file.first-sfn-lambda.output_base64sha256
 }
 
+resource "aws_sfn_activity" "worker-activity" {
+  name = "worker-activity"
+}
+
 resource "aws_sfn_state_machine" "demo-state-machine" {
   name = "demo-state-machine"
   definition = templatefile("${path.module}/states.json.tmpl", {
-    first_lambda_arn: aws_lambda_function.first-sfn-lambda.arn
+    first_lambda_arn: aws_lambda_function.first-sfn-lambda.arn,
+    activity_arn: aws_sfn_activity.worker-activity.id
   })
   role_arn = aws_iam_role.sfn-role.arn
   type = "STANDARD"
+}
+
+module "worker" {
+  source = "./worker"
+  worker-activity-arn = aws_sfn_activity.worker-activity.id
+  worker-name = "ec2-worker"
 }

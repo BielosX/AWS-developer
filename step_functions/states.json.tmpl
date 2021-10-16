@@ -6,10 +6,18 @@
     "First": {
       "Type": "Task",
       "Resource": "${first_lambda_arn}",
-      "Next": "Second"
+      "Next": "Worker",
+      "ResultPath": "$.firstResult"
     },
-    "Second": {
+    "Worker": {
+      "Type": "Task",
+      "Resource": "${activity_arn}",
+      "ResultPath": "$.workerResult",
+      "Next": "Final"
+    },
+    "Final": {
       "Type": "Pass",
+      "OutputPath": "$.workerResult.result",
       "End": true
     }
   }
