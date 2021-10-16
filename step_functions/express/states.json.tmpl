@@ -1,0 +1,61 @@
+{
+  "Version": "1.0",
+  "TimeoutSeconds": 60,
+  "StartAt": "Splitter",
+  "States": {
+    "Splitter": {
+      "Type": "Task",
+      "Resource": "${splitter_lambda_arn}",
+      "Next": "SingleOrParallel"
+    },
+    "SingleOrParallel": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.count",
+          "NumericGreaterThan": 1,
+          "Next": "ParallelRecord"
+        },
+        {
+          "Variable": "$.count",
+          "NumericEquals": 1,
+          "Next": "SingleRecord"
+        }
+      ]
+    },
+    "SingleRecord": {
+      "Type": "Task",
+      "InputPath": "$.firstHalf",
+      "Resource": "${copy_record_lambda_arn}",
+      "End": true
+    },
+    "ParallelRecord": {
+      "Type": "Parallel",
+      "End": true,
+      "Branches": [
+        {
+          "StartAt": "ProcessFirstHalf",
+          "States": {
+            "ProcessFirstHalf": {
+              "Type": "Task",
+              "InputPath": "$.firstHalf",
+              "Resource": "${copy_record_lambda_arn}",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "ProcessSecondHalf",
+          "States": {
+            "ProcessSecondHalf": {
+              "Type": "Task",
+              "InputPath": "$.secondHalf",
+              "Resource": "${copy_record_lambda_arn}",
+              "End": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}
