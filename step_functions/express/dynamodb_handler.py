@@ -7,7 +7,7 @@ client = boto3.client('stepfunctions')
 def map_record(record):
     dynamodb = record['dynamodb']
     if 'NewImage' in dynamodb:
-        return {'diff' :dynamodb['NewImage'], 'action': record['eventName']}
+        return {'diff': dynamodb['NewImage'], 'action': record['eventName']}
     else:
         return {'diff': dynamodb['Keys'], 'action': record['eventName']}
 
