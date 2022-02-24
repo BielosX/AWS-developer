@@ -1,0 +1,8 @@
+Resources:
+  DeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "bielosx-deployment-bucket-${AWS::Region}-${AWS::AccountId}"
+Outputs:
+  Bucket:
+    Value: !Ref DeploymentBucket

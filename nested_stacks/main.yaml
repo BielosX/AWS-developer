@@ -1,0 +1,15 @@
+Parameters:
+  DeploymentBucket:
+    Type: String
+Resources:
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${DeploymentBucket}/vpc.yaml"
+  Ec2Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${DeploymentBucket}/ec2.yaml"
+      Parameters:
+        VpcId: !GetAtt VpcStack.Outputs.VpcId
+        SubnetId: !GetAtt VpcStack.Outputs.PublicSubnetId
