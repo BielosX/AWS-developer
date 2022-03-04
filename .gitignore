@@ -3,3 +3,4 @@ terraform.*
 .terraform
 *.zip
 .terraform.*
+.aws-sam

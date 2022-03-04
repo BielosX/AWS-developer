@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  RedisPort:
+    Type: Number
+    Default: 6379
+
+Globals:
+  Function:
+    Timeout: 30
+
+Resources:
+  DemoVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      CidrBlock: "10.0.0.0/22"
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: "10.0.1.0/24"
+      VpcId: !Ref DemoVpc
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: 'AWS::Region'
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Redis security group"
+      VpcId: !Ref DemoVpc
+      SecurityGroupIngress:
+        CidrIp: "0.0.0.0/0"
+        FromPort: !Ref RedisPort
+        ToPort: !Ref RedisPort
+        IpProtocol: "tcp"
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: "Redis subnet group"
+      SubnetIds:
+        - !Ref PrivateSubnet
+  RedisReplicationGroup:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: "Replication Group"
+      NumCacheClusters: 1
+      CacheNodeType: "cache.t3.micro"
+      CacheParameterGroupName: "default.redis6.x"
+      Port: !Ref RedisPort
+      Engine: "Redis"
+      EngineVersion: "6.x"
+      AutomaticFailoverEnabled: false
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      SecurityGroupIds:
+        - !Ref RedisSecurityGroup
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Lambda security group"
+      VpcId: !Ref DemoVpc
+      SecurityGroupEgress:
+        CidrIp: "0.0.0.0/0"
+        FromPort: !Ref RedisPort
+        ToPort: !Ref RedisPort
+        IpProtocol: "tcp"
+  UsersFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./users
+      DockerTag: python3.9-v1
+    Properties:
+      PackageType: Image
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet
+      Environment:
+        Variables:
+          REDIS_URL: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Address
+          REDIS_PORT: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Port
+      Architectures:
+        - x86_64
+      Events:
+        CreateUser:
+          Type: Api
+          Properties:
+            Path: /users
+            Method: post
+        GetUserById:
+          Type: Api
+          Properties:
+            Path: /users/{userId}
+            Method: get
+
+Outputs:
+  UsersApi:
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  UsersFunction:
+    Value: !GetAtt UsersFunction.Arn
+  UsersFunctionIamRole:
+    Value: !GetAtt UsersFunction.Arn
