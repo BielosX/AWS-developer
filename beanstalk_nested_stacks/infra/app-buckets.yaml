@@ -3,12 +3,46 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "app-artifacts-${AWS::AccountId}-${AWS::Region}"
-      AccessControl: "AuthenticatedRead"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  ArtifactsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactsBucket
+      PolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt ArtifactsBucket.Arn
+              - !Sub "${ArtifactsBucket.Arn}/*"
   TemplatesBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "app-templates-${AWS::AccountId}-${AWS::Region}"
-      AccessControl: "AuthenticatedRead"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  TemplatesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TemplatesBucket
+      PolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt TemplatesBucket.Arn
+              - !Sub "${TemplatesBucket.Arn}/*"
 Outputs:
   ArtifactsBucketName:
     Value: !Ref ArtifactsBucket
