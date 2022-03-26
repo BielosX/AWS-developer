@@ -1,0 +1,29 @@
+Parameters:
+  AppRoleArn:
+    Type: String
+Resources:
+  UsersBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "app-users-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  UsersBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref UsersBucket
+      PolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Ref AppRoleArn
+            Action: "s3:*"
+            Resource:
+              - !GetAtt UsersBucket.Arn
+              - !Sub "${UsersBucket.Arn}/*"
+Outputs:
+  UsersBucketName:
+    Value: !Ref UsersBucket

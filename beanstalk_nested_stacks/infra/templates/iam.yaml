@@ -23,6 +23,10 @@ Resources:
                   - "s3:ListObjects"
                   - "s3:ListObjectsV2"
                   - "s3:DeleteObject"
+                  - "s3:ListBuckets"
+                  - "s3:ListAllMyBuckets"
 Outputs:
   MyRoleName:
     Value: !Ref MyRole
+  MyRoleArn:
+    Value: !GetAtt MyRole.Arn

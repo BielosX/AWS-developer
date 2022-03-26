@@ -7,6 +7,8 @@ Parameters:
     Type: String
   RoleName:
     Type: String
+  UsersBucket:
+    Type: String
 Resources:
   MyApplication:
     Type: AWS::ElasticBeanstalk::Application
@@ -46,3 +48,6 @@ Resources:
         - Namespace: "aws:autoscaling:launchconfiguration"
           OptionName: "IamInstanceProfile"
           Value: !Ref MyEnvInstanceProfile
+        - Namespace: "aws:elasticbeanstalk:application:environment"
+          OptionName: "USERS_BUCKET"
+          Value: !Ref UsersBucket

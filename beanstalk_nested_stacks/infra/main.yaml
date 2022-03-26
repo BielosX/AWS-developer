@@ -12,6 +12,12 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${TemplatesBucketName}/iam.yaml"
+  MyUsersBucketStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${TemplatesBucketName}/users_bucket.yaml"
+      Parameters:
+        AppRoleArn: !GetAtt MyIamStack.Outputs.MyRoleArn
   MyBeanstalkStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -21,3 +27,4 @@ Resources:
         DeploymentBucket: !Ref DeploymentBucket
         ArtifactS3Key: !Ref ArtifactS3Key
         AppName: !Ref AppName
+        UsersBucket: !GetAtt MyUsersBucketStack.Outputs.UsersBucketName

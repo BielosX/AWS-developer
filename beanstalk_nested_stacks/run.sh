@@ -61,8 +61,15 @@ destroy() {
   aws cloudformation wait stack-delete-complete --stack-name "$BUCKETS_STACK_NAME"
 }
 
+purge_db() {
+  BUCKET=$(aws s3api list-buckets --query "Buckets[].Name" | jq -r '.[] | select(test("app-users-*"))')
+  echo "DB bucket: $BUCKET"
+  aws s3 rm "s3://$BUCKET" --recursive
+}
+
 case "$1" in
   "deploy") deploy ;;
   "destroy") destroy ;;
+  "purge_db") purge_db ;;
   *) echo "Hello"
 esac
