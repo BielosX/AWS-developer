@@ -1,0 +1,20 @@
+Resources:
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "app-artifacts-${AWS::AccountId}-${AWS::Region}"
+      AccessControl: "AuthenticatedRead"
+  TemplatesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "app-templates-${AWS::AccountId}-${AWS::Region}"
+      AccessControl: "AuthenticatedRead"
+Outputs:
+  ArtifactsBucketName:
+    Value: !Ref ArtifactsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-Artifacts-Bucket-Name"
+  TemplatesBucketName:
+    Value: !Ref TemplatesBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-Templates-Bucket-Name"

@@ -1,0 +1,23 @@
+Parameters:
+  TemplatesBucketName:
+    Type: String
+  DeploymentBucket:
+    Type: String
+  ArtifactS3Key:
+    Type: String
+  AppName:
+    Type: String
+Resources:
+  MyIamStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${TemplatesBucketName}/iam.yaml"
+  MyBeanstalkStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${TemplatesBucketName}/beanstalk.yaml"
+      Parameters:
+        RoleName: !GetAtt MyIamStack.Outputs.MyRoleName
+        DeploymentBucket: !Ref DeploymentBucket
+        ArtifactS3Key: !Ref ArtifactS3Key
+        AppName: !Ref AppName

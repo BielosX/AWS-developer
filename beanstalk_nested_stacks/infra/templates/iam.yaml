@@ -1,0 +1,28 @@
+Resources:
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
+      Policies:
+        - PolicyName: "my-app-s3-access"
+          PolicyDocument:
+            Statement:
+              - Effect: "Allow"
+                Resource: "*"
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                  - "s3:ListObjects"
+                  - "s3:ListObjectsV2"
+                  - "s3:DeleteObject"
+Outputs:
+  MyRoleName:
+    Value: !Ref MyRole

@@ -1,0 +1,48 @@
+Parameters:
+  AppName:
+    Type: String
+  DeploymentBucket:
+    Type: String
+  ArtifactS3Key:
+    Type: String
+  RoleName:
+    Type: String
+Resources:
+  MyApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: !Ref AppName
+  MyApplicationVersion:
+    Type: AWS::ElasticBeanstalk::ApplicationVersion
+    Properties:
+      ApplicationName: !Ref MyApplication
+      SourceBundle:
+        S3Bucket: !Ref DeploymentBucket
+        S3Key: !Ref ArtifactS3Key
+  MyEnvInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref RoleName
+  MyEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName: !Ref MyApplication
+      VersionLabel: !Ref MyApplicationVersion
+      SolutionStackName: "64bit Amazon Linux 2 v3.2.12 running Corretto 11"
+      OptionSettings:
+        - Namespace: "aws:ec2:instances"
+          OptionName: "InstanceTypes"
+          Value: "t3.micro"
+        - Namespace: "aws:elasticbeanstalk:environment:process:default"
+          OptionName: "HealthCheckPath"
+          Value: "/status/health"
+        - Namespace: "aws:elasticbeanstalk:environment:process:default"
+          OptionName: "Protocol"
+          Value: "HTTP"
+        - Namespace: "aws:elasticbeanstalk:application"
+          OptionName: "Application Healthcheck URL"
+          Value: "/status/health"
+        - Namespace: "aws:autoscaling:launchconfiguration"
+          OptionName: "IamInstanceProfile"
+          Value: !Ref MyEnvInstanceProfile
