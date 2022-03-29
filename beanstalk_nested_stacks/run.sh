@@ -67,9 +67,46 @@ purge_db() {
   aws s3 rm "s3://$BUCKET" --recursive
 }
 
+get_cert_arn() {
+  ARNS=$(aws acm list-certificates --includes keyTypes=RSA_4096 | jq -c '.CertificateSummaryList | map(.CertificateArn) | .[]')
+  RESULT=""
+  for arn in $ARNS
+  do
+    TRIMMED=$(echo "$arn" | tr -d '"')
+    TAG=$(aws acm list-tags-for-certificate --certificate-arn "$TRIMMED" | jq -r '.Tags | map(.Value) | .[] | select(test("self-signed-test-cert"))')
+    if [ "$TAG" = 'self-signed-test-cert' ]; then
+      RESULT=$arn
+    fi
+  done
+}
+
+import_cert() {
+  get_cert_arn
+  if [ -z "$RESULT" ]; then
+    mkdir -p "$PWD/out"
+    openssl req -newkey rsa:4096 \
+                -x509 \
+                -sha256 \
+                -days 365 \
+                -nodes \
+                -out "$PWD/out/cert.crt" \
+                -keyout "$PWD/out/private.key" \
+                -subj "/C=us/ST=washington/L=seattle/O=example/OU=example/CN=example.com"
+    sleep 30
+    CERTIFICATE_ARN=$(aws acm import-certificate --certificate "fileb://$PWD/out/cert.crt" \
+      --private-key "fileb://$PWD/out/private.key" \
+      --tags Key=Name,Value="self-signed-test-cert" | jq -r '.CertificateArn')
+    echo "Certificate imported, ARN: $CERTIFICATE_ARN"
+  else
+    echo "Certificate already exist with ARN: $RESULT"
+    CERTIFICATE_ARN="$RESULT"
+  fi
+}
+
 case "$1" in
   "deploy") deploy ;;
   "destroy") destroy ;;
   "purge_db") purge_db ;;
+  "import_cert") import_cert ;;
   *) echo "Hello"
 esac

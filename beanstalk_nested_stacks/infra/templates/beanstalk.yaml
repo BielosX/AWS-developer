@@ -51,3 +51,6 @@ Resources:
         - Namespace: "aws:elasticbeanstalk:application:environment"
           OptionName: "USERS_BUCKET"
           Value: !Ref UsersBucket
+        - Namespace: "aws:elasticbeanstalk:environment"
+          OptionName: "LoadBalancerType"
+          Value: "application"

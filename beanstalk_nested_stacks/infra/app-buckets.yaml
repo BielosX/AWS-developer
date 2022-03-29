@@ -18,6 +18,9 @@ Resources:
             Principal:
               AWS: "*"
             Action: "s3:*"
+            Condition:
+              StringEquals:
+                "aws:SourceAccount": !Sub "${AWS::AccountId}"
             Resource:
               - !GetAtt ArtifactsBucket.Arn
               - !Sub "${ArtifactsBucket.Arn}/*"
@@ -40,6 +43,9 @@ Resources:
             Principal:
               AWS: "*"
             Action: "s3:*"
+            Condition:
+              StringEquals:
+                "aws:SourceAccount": !Sub "${AWS::AccountId}"
             Resource:
               - !GetAtt TemplatesBucket.Arn
               - !Sub "${TemplatesBucket.Arn}/*"
