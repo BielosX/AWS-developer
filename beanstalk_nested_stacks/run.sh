@@ -30,43 +30,6 @@ deploy_artifact() {
   aws s3 cp target/"$JAR_FILE" "s3://${ARTIFACTS_BUCKET}"
 }
 
-deploy_templates() {
-  templates_bucket
-  artifacts_bucket
-  aws s3 cp infra/templates "s3://$TEMPLATES_BUCKET" --recursive
-  aws cloudformation deploy --template-file infra/main.yaml --stack-name "$APP_STACK_NAME" \
-    --parameter-overrides TemplatesBucketName="$TEMPLATES_BUCKET" DeploymentBucket="$ARTIFACTS_BUCKET" \
-    ArtifactS3Key="$JAR_FILE" AppName="$APP_NAME" \
-    --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
-}
-
-clean_buckets() {
-  artifacts_bucket
-  templates_bucket
-  aws s3 rm "s3://$TEMPLATES_BUCKET" --recursive
-  aws s3 rm "s3://$ARTIFACTS_BUCKET" --recursive
-}
-
-deploy() {
-  init_buckets
-  deploy_artifact
-  deploy_templates
-}
-
-destroy() {
-  clean_buckets
-  aws cloudformation delete-stack --stack-name "$APP_STACK_NAME"
-  aws cloudformation wait stack-delete-complete --stack-name "$APP_STACK_NAME"
-  aws cloudformation delete-stack --stack-name "$BUCKETS_STACK_NAME"
-  aws cloudformation wait stack-delete-complete --stack-name "$BUCKETS_STACK_NAME"
-}
-
-purge_db() {
-  BUCKET=$(aws s3api list-buckets --query "Buckets[].Name" | jq -r '.[] | select(test("app-users-*"))')
-  echo "DB bucket: $BUCKET"
-  aws s3 rm "s3://$BUCKET" --recursive
-}
-
 get_cert_arn() {
   ARNS=$(aws acm list-certificates --includes keyTypes=RSA_4096 | jq -c '.CertificateSummaryList | map(.CertificateArn) | .[]')
   RESULT=""
@@ -75,7 +38,7 @@ get_cert_arn() {
     TRIMMED=$(echo "$arn" | tr -d '"')
     TAG=$(aws acm list-tags-for-certificate --certificate-arn "$TRIMMED" | jq -r '.Tags | map(.Value) | .[] | select(test("self-signed-test-cert"))')
     if [ "$TAG" = 'self-signed-test-cert' ]; then
-      RESULT=$arn
+      RESULT=$TRIMMED
     fi
   done
 }
@@ -99,15 +62,58 @@ import_cert() {
     echo "Certificate imported, ARN: $CERTIFICATE_ARN"
     rm -rf "$PWD/out"
   else
-    echo "Certificate already exist with ARN: $RESULT"
-    CERTIFICATE_ARN="$RESULT"
+    TRIMMED=$(echo "$RESULT" | tr -d '"')
+    echo "Certificate already exist with ARN: $TRIMMED"
+    CERTIFICATE_ARN="$TRIMMED"
   fi
+}
+
+deploy_templates() {
+  templates_bucket
+  artifacts_bucket
+  import_cert
+  aws s3 cp infra/templates "s3://$TEMPLATES_BUCKET" --recursive
+  aws cloudformation deploy --template-file infra/main.yaml --stack-name "$APP_STACK_NAME" \
+    --parameter-overrides TemplatesBucketName="$TEMPLATES_BUCKET" DeploymentBucket="$ARTIFACTS_BUCKET" \
+    ArtifactS3Key="$JAR_FILE" AppName="$APP_NAME" \
+    CertificateArn="$CERTIFICATE_ARN" \
+    --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+}
+
+clean_buckets() {
+  artifacts_bucket
+  templates_bucket
+  aws s3 rm "s3://$TEMPLATES_BUCKET" --recursive
+  aws s3 rm "s3://$ARTIFACTS_BUCKET" --recursive
+}
+
+deploy() {
+  init_buckets
+  deploy_artifact
+  deploy_templates
+}
+
+destroy() {
+  clean_buckets
+  aws cloudformation delete-stack --stack-name "$APP_STACK_NAME"
+  aws cloudformation wait stack-delete-complete --stack-name "$APP_STACK_NAME"
+  aws cloudformation delete-stack --stack-name "$BUCKETS_STACK_NAME"
+  aws cloudformation wait stack-delete-complete --stack-name "$BUCKETS_STACK_NAME"
+  get_cert_arn
+  if [ -n "$RESULT" ]; then
+    aws acm delete-certificate --certificate-arn "$RESULT"
+  fi
+}
+
+purge_db() {
+  BUCKET=$(aws s3api list-buckets --query "Buckets[].Name" | jq -r '.[] | select(test("app-users-*"))')
+  echo "DB bucket: $BUCKET"
+  aws s3 rm "s3://$BUCKET" --recursive
 }
 
 case "$1" in
   "deploy") deploy ;;
   "destroy") destroy ;;
   "purge_db") purge_db ;;
-  "import_cert") import_cert ;;
   *) echo "Hello"
 esac

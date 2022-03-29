@@ -1,4 +1,6 @@
 Parameters:
+  CertificateArn:
+    Type: String
   AppName:
     Type: String
   DeploymentBucket:
@@ -54,3 +56,6 @@ Resources:
         - Namespace: "aws:elasticbeanstalk:environment"
           OptionName: "LoadBalancerType"
           Value: "application"
+        - Namespace: "aws:elasticbeanstalk:customoption"
+          OptionName: "CertificateArn"
+          Value: !Ref CertificateArn

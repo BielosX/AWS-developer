@@ -7,6 +7,8 @@ Parameters:
     Type: String
   AppName:
     Type: String
+  CertificateArn:
+    Type: String
 Resources:
   MyIamStack:
     Type: AWS::CloudFormation::Stack
@@ -28,3 +30,4 @@ Resources:
         ArtifactS3Key: !Ref ArtifactS3Key
         AppName: !Ref AppName
         UsersBucket: !GetAtt MyUsersBucketStack.Outputs.UsersBucketName
+        CertificateArn: !Ref CertificateArn
