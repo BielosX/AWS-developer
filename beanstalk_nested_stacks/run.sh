@@ -97,6 +97,7 @@ import_cert() {
       --private-key "fileb://$PWD/out/private.key" \
       --tags Key=Name,Value="self-signed-test-cert" | jq -r '.CertificateArn')
     echo "Certificate imported, ARN: $CERTIFICATE_ARN"
+    rm -rf "$PWD/out"
   else
     echo "Certificate already exist with ARN: $RESULT"
     CERTIFICATE_ARN="$RESULT"
