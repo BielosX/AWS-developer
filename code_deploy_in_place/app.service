@@ -1,3 +1,14 @@
 [Unit]
 Wants=network-online.target
 After=network.target network-online.target cloud-final.service
+
+[Service]
+User=app
+Group=app
+
+Type=simple
+ExecStart=/usr/bin/java -jar /opt/app/app.jar
+Restart=on-failure
+
+[Install]
+WantedBy=cloud-init.target

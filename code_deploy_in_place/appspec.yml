@@ -1,5 +1,15 @@
 version: 0.0
 os: linux
+files:
+  - source: app.service
+    destination: /usr/lib/systemd/system
+  - source: app.jar
+    destination: /opt/app
+file_exists_behavior: OVERWRITE
 hooks:
   BeforeInstall:
     - location: scripts/hello.sh
+    - location: scripts/deregister_service.sh
+    - location: scripts/prepare_env.sh
+  AfterInstall:
+    - location: scripts/start_service.sh
