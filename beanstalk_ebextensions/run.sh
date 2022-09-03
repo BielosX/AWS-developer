@@ -49,5 +49,5 @@ case "$1" in
   "terraform_apply") terraform_apply ;;
   "terraform_plan") terraform_plan ;;
   "terraform_destroy") terraform_destroy ;;
-  *) echo "package | deploy" ;;
+  *) echo "package | deploy | terraform_apply | terraform_plan | terraform_destroy" ;;
 esac
