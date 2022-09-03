@@ -66,8 +66,13 @@ resource "aws_elastic_beanstalk_environment" "demo-app-env" {
     value = "enhanced"
   }
   setting {
-    namespace = "aws:elasticbeanstalk:command"
-    name = "DeploymentPolicy"
-    value = "RollingWithAdditionalBatch"
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name = "StreamLogs"
+    value = true
+  }
+  setting {
+    namespace = "aws:elasticbeanstalk:cloudwatch:logs"
+    name = "DeleteOnTerminate"
+    value = true
   }
 }

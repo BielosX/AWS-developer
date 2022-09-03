@@ -46,6 +46,9 @@ Resources:
         - Namespace: "aws:elasticbeanstalk:healthreporting:system"
           OptionName: "SystemType"
           Value: "enhanced"
-        - Namespace: "aws:elasticbeanstalk:command"
-          OptionName: "DeploymentPolicy"
-          Value: "RollingWithAdditionalBatch"
+        - Namespace: "aws:elasticbeanstalk:cloudwatch:logs"
+          OptionName: "StreamLogs"
+          Value: true
+        - Namespace: "aws:elasticbeanstalk:cloudwatch:logs"
+          OptionName: "DeleteOnTerminate"
+          Value: true
