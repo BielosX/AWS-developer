@@ -39,7 +39,7 @@ function terraform_plan() {
 
 function terraform_destroy() {
   pushd terraform || exit
-  terraform destroy -auto-approve
+  terraform destroy -auto-approve || exit
   popd || exit
 }
 
