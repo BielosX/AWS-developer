@@ -44,6 +44,7 @@ function terraform_destroy() {
 }
 
 function cf_apply() {
+  # Returns a list of the available solution stack names, with the public version first and then in reverse chronological order.
   SOLUTION_STACK=$(aws elasticbeanstalk list-available-solution-stacks \
     | jq -r '.SolutionStacks | map(select(test("64bit Amazon Linux 2 (.*) running Python 3.8"))) | .[0]')
   aws cloudformation deploy --template-file cloudformation/beanstalk.yaml \
