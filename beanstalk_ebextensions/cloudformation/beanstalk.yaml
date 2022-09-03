@@ -1,0 +1,51 @@
+Parameters:
+  SolutionStackName:
+    Type: String
+Resources:
+  DemoBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "demo-app-bucket-${AWS::Region}-${AWS::AccountId}"
+      AccessControl: "Private"
+  DemoApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: "demo-app"
+  AppIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
+  AppInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref AppIamRole
+  DemoEnv:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName: !Ref DemoApplication
+      EnvironmentName: "demo-app-env"
+      SolutionStackName: !Ref SolutionStackName
+      OptionSettings:
+        - Namespace: "aws:autoscaling:launchconfiguration"
+          OptionName: "InstanceType"
+          Value: "t3.micro"
+        - Namespace: "aws:autoscaling:launchconfiguration"
+          OptionName: "IamInstanceProfile"
+          Value: !Ref AppInstanceProfile
+        - Namespace: "aws:elasticbeanstalk:healthreporting:system"
+          OptionName: "SystemType"
+          Value: "enhanced"
+        - Namespace: "aws:elasticbeanstalk:command"
+          OptionName: "DeploymentPolicy"
+          Value: "RollingWithAdditionalBatch"

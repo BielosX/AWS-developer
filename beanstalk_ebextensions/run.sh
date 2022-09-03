@@ -43,11 +43,31 @@ function terraform_destroy() {
   popd || exit
 }
 
+function cf_apply() {
+  SOLUTION_STACK=$(aws elasticbeanstalk list-available-solution-stacks \
+    | jq -r '.SolutionStacks | map(select(test("64bit Amazon Linux 2 (.*) running Python 3.8"))) | .[0]')
+  aws cloudformation deploy --template-file cloudformation/beanstalk.yaml \
+    --stack-name "demo-app-stack" \
+    --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+    --parameter-overrides SolutionStackName="${SOLUTION_STACK}"
+}
+
+function cf_destroy() {
+  ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
+  REGION=$(aws configure get region)
+  BUCKET_NAME="demo-app-bucket-${REGION}-${ACCOUNT_ID}"
+  aws s3 rm "s3://${BUCKET_NAME}" --recursive
+  aws cloudformation delete-stack --stack-name "demo-app-stack"
+  aws cloudformation wait stack-delete-complete --stack-name "demo-app-stack"
+}
+
 case "$1" in
   "package") package ;;
   "deploy") deploy ;;
   "terraform_apply") terraform_apply ;;
   "terraform_plan") terraform_plan ;;
   "terraform_destroy") terraform_destroy ;;
-  *) echo "package | deploy | terraform_apply | terraform_plan | terraform_destroy" ;;
+  "cf_apply") cf_apply ;;
+  "cf_destroy") cf_destroy ;;
+  *) echo "package | deploy | terraform_apply | terraform_plan | terraform_destroy | cf_apply | cf_destroy" ;;
 esac
