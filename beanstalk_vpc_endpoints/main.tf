@@ -56,7 +56,7 @@ locals {
     "com.amazonaws.${local.region}.cloudformation",
     "com.amazonaws.${local.region}.elasticbeanstalk-health",
     "com.amazonaws.${local.region}.elasticbeanstalk",
-    "com.amazonaws.${local.region}.logs",
+    "com.amazonaws.${local.region}.elasticbeanstalk",
     "com.amazonaws.${local.region}.sqs" // Required by https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-hup.html
   ]
 }
@@ -108,7 +108,7 @@ data "aws_iam_policy_document" "s3-endpoint-policy" {
     resources = [
       "arn:aws:s3:::elasticbeanstalk-${local.region}-${local.account_id}",
       "arn:aws:s3:::elasticbeanstalk-${local.region}-${local.account_id}/*",
-      "arn:aws:s3:::cloudformation-waitcondition-region-${local.region}/*"
+      "arn:aws:s3:::cloudformation-waitcondition-${local.region}/*"
     ]
   }
 }
