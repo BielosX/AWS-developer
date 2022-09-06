@@ -56,7 +56,6 @@ locals {
     "com.amazonaws.${local.region}.cloudformation",
     "com.amazonaws.${local.region}.elasticbeanstalk-health",
     "com.amazonaws.${local.region}.elasticbeanstalk",
-    "com.amazonaws.${local.region}.elasticbeanstalk",
     "com.amazonaws.${local.region}.sqs" // Required by https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-hup.html
   ]
 }
