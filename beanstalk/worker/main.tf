@@ -62,11 +62,6 @@ resource "aws_security_group" "worker-sg" {
   }
 }
 
-resource "aws_sqs_queue" "worker-queue" {
-  name = "worker-queue"
-  visibility_timeout_seconds = 60
-}
-
 resource "aws_s3_bucket" "deployment-bucket" {
   bucket = "worker-deployment-bucket-${data.aws_region.current.name}-${data.aws_caller_identity.current.account_id}"
   acl = "private"
@@ -121,11 +116,6 @@ resource "aws_elastic_beanstalk_environment" "worker-env" {
     namespace = "aws:autoscaling:launchconfiguration"
     name = "SecurityGroups"
     value = aws_security_group.worker-sg.name
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:sqsd"
-    name = "WorkerQueueURL"
-    value = aws_sqs_queue.worker-queue.url
   }
   setting {
     namespace = "aws:autoscaling:asg"
