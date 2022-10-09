@@ -1,0 +1,37 @@
+<html>
+<script>
+    function getLambdas() {
+        const req = new XMLHttpRequest();
+        req.open('GET', '/app/api/lambdas');
+        req.onload = (e) => {
+            if (req.readyState === 4) {
+                if (req.status === 200) {
+                    const elem = document.getElementById('lambdas');
+                    elem.innerText = req.responseText;
+                }
+            }
+        };
+        req.send();
+    }
+
+    function getQueues() {
+        const req = new XMLHttpRequest();
+        req.open('GET', '/app/api/queues');
+        req.onload = (e) => {
+            if (req.readyState === 4) {
+                if (req.status === 200) {
+                    const elem = document.getElementById('queues');
+                    elem.innerText = req.responseText;
+                }
+            }
+        };
+        req.send();
+    }
+</script>
+<body>
+<button onclick="getQueues()">Queues</button>
+<button onclick="getLambdas()">Lambdas</button>
+<span id="lambdas"></span>
+<span id="queues"></span>
+</body>
+</html>

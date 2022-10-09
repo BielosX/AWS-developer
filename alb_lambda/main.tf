@@ -2,6 +2,12 @@ data "aws_vpc" "default-vpc" {
   default = true
 }
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  account-id = data.aws_caller_identity.current.account_id
+}
+
 data "aws_subnets" "default-subnets" {
   filter {
     name = "vpc-id"
@@ -16,7 +22,7 @@ data "aws_iam_policy_document" "lambda-assume-role" {
     actions = ["sts:AssumeRole"]
     principals {
       identifiers = ["lambda.amazonaws.com"]
-      type        = "Service"
+      type = "Service"
     }
   }
 }
@@ -68,12 +74,26 @@ resource "aws_security_group" "alb-sg" {
   }
 }
 
+resource "aws_s3_bucket" "alb-access-logs" {
+  bucket_prefix = "alb-access-logs"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_acl" "alb-access-logs-acl" {
+  bucket = aws_s3_bucket.alb-access-logs.id
+  acl = "public-read-write"
+}
+
 resource "aws_lb" "demo-alb" {
   name = "demo-alb"
-  internal = false
+  internal = !var.internet-facing
   load_balancer_type = "application"
   security_groups = [aws_security_group.alb-sg.id]
   subnets = data.aws_subnets.default-subnets.ids
+  access_logs {
+    bucket = aws_s3_bucket.alb-access-logs.id
+    enabled = true
+  }
 }
 
 resource "aws_lambda_permission" "allow_invoke_lambdas_list" {
@@ -152,4 +172,5 @@ resource "aws_lb_listener_rule" "queues-listing-forward" {
 
 resource "aws_sqs_queue" "demo-queue" {
   name = "demo-queue"
+  sqs_managed_sse_enabled = false
 }
